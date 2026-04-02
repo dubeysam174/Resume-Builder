@@ -11,7 +11,7 @@ import api from './configs/api'
 import {login,setLoading} from './app/features/autSlice'
 import {Toaster} from 'react-hot-toast'
 import Signup from './pages/Signup'
-import ProtectedRoute from './protectedroutes/protectedRoutes'
+import ProtectedRoute from './protectedroutes/ProtectedRoutes'
 import TemplateSection from './components/TemplatePreview/TemplateSection'
 const App = () => {
 
