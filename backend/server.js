@@ -18,7 +18,13 @@ const _dirname = path.resolve() // for production
 await connectDB()
 
 app.use(express.json())
-app.use(cors())
+app.use(cors({
+  origin: [
+    "http://localhost:3000", 
+    "https://resume-builder-86un.onrender.com"
+  ],
+  credentials: true
+}))
 
 
 //creating the routes
