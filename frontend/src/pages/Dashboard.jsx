@@ -66,37 +66,51 @@ const Dashboard = () => {
     }
   };
 
-  const uploadResume = async (e) => {
-    e.preventDefault();
-    if (!file) return toast.error("Please select a PDF");
+ const uploadResume = async (e) => {
+  e.preventDefault();
+  if (!file) return toast.error("Please select a PDF");
 
-    setIsLoading(true);
+  setIsLoading(true);
+  try {
+    // Extract text from PDF
+    let resumeText;
     try {
-      let resumeText;
-      try {
-        resumeText = await extractTextFromPDF(file);
-        toast.success("Text extracted: " + resumeText?.slice(0, 50)); // 👈 shows first 50 chars
-      } catch (pdfError) {
-        toast.error("PDF Error: " + pdfError.message); // 👈 shows exact error
-        setIsLoading(false);
-        return;
-      }
-
-      const { data } = await api.post("/api/ai/upload-resume",
-        { title, resumeText },
-        { headers: { Authorization: token } }
-      );
-
-      setTitle("");
-      setFile(null);
-      setshowUploadResume(false);
-      navigate(`/app/builder/${data.resumeId}`);
-    } catch (error) {
-      console.log("❌ Full error:", JSON.stringify(error, null, 2));
-      toast.error(error?.response?.data?.message || error.message);
-    } finally {
+      resumeText = await extractTextFromPDF(file);
+      toast.success("Text extracted successfully");
+    } catch (pdfError) {
+      toast.error("Failed to extract text from PDF");
+      console.error("PDF Error:", pdfError);
       setIsLoading(false);
+      return;
     }
+
+    // Send extracted text to backend
+    const { data } = await api.post(
+      "/api/ai/upload-resume",
+      { 
+        title: title || "Untitled Resume", 
+        resumeText 
+      },
+      {
+        headers: { 
+          Authorization: token,
+          'Content-Type': 'application/json' // ✅ This is correct for JSON data
+        }
+      }
+    );
+
+    toast.success("Resume uploaded successfully!");
+    setTitle("");
+    setFile(null);
+    setshowUploadResume(false);
+    navigate(`/app/builder/${data.resumeId}`);
+    
+  } catch (error) {
+    console.error("❌ Upload error:", error.response?.data || error.message);
+    toast.error(error?.response?.data?.message || "Upload failed");
+  } finally {
+    setIsLoading(false);
+  }
 };
 
   const deleteResume = async () => {
