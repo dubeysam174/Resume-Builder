@@ -13,7 +13,9 @@ import api from "@/configs/api";
 import toast from "react-hot-toast";
 import * as pdfjsLib from "pdfjs-dist";
 import workerSrc from "pdfjs-dist/build/pdf.worker.min.mjs?url";
+
 pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc;
+
 const extractTextFromPDF = async (file) => {
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
@@ -40,11 +42,11 @@ const Dashboard = () => {
 
   const navigate = useNavigate();
 
+  const authHeaders = { headers: { Authorization: token } };
+
   const loadAllResumes = async () => {
     try {
-      const { data } = await api.get("/api/users/resumes", {
-        headers: { Authorization: token },
-      });
+      const { data } = await api.get("/api/users/resumes", authHeaders);
       setAllresumes(data.resumes);
     } catch (error) {
       toast.error(error?.response?.data?.message || error.message);
@@ -54,7 +56,7 @@ const Dashboard = () => {
   const createResume = async (e) => {
     e.preventDefault();
     try {
-      const { data } = await api.post("/api/resumes/create", { title });
+      const { data } = await api.post("/api/resumes/create", { title }, authHeaders); // ✅ added
       setAllresumes([...allresumes, data.resume]);
       setTitle("");
       setshowCreateResume(false);
@@ -71,10 +73,7 @@ const Dashboard = () => {
     setIsLoading(true);
     try {
       const resumeText = await extractTextFromPDF(file);
-      const { data } = await api.post("/api/ai/upload-resume", {
-        title,
-        resumeText,
-      });
+      const { data } = await api.post("/api/ai/upload-resume", { title, resumeText }, authHeaders); // ✅ added
 
       setTitle("");
       setFile(null);
@@ -89,7 +88,7 @@ const Dashboard = () => {
 
   const deleteResume = async () => {
     try {
-      const { data } = await api.delete(`/api/resumes/delete/${deleteResumeId}`);
+      const { data } = await api.delete(`/api/resumes/delete/${deleteResumeId}`, authHeaders); // ✅ added
       setAllresumes((prev) =>
         prev.filter((resume) => resume._id !== deleteResumeId)
       );
