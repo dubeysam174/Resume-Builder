@@ -73,7 +73,8 @@ const Dashboard = () => {
     setIsLoading(true);
     try {
       const resumeText = await extractTextFromPDF(file);
-      const { data } = await api.post("/api/ai/upload-resume", { title, resumeText }, authHeaders); // ✅ added
+      const { data } = await api.post("/api/ai/upload-resume", { title, resumeText }); // ✅ added
+       console.log("Extracted text:", resumeText); // 👈 add this to debug
 
       setTitle("");
       setFile(null);
