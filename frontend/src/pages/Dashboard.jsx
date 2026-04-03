@@ -72,9 +72,20 @@ const Dashboard = () => {
 
     setIsLoading(true);
     try {
-      const resumeText = await extractTextFromPDF(file);
-      const { data } = await api.post("/api/ai/upload-resume", { title, resumeText }); // ✅ added
-       console.log("Extracted text:", resumeText); // 👈 add this to debug
+      let resumeText;
+      try {
+        resumeText = await extractTextFromPDF(file);
+        toast.success("Text extracted: " + resumeText?.slice(0, 50)); // 👈 shows first 50 chars
+      } catch (pdfError) {
+        toast.error("PDF Error: " + pdfError.message); // 👈 shows exact error
+        setIsLoading(false);
+        return;
+      }
+
+      const { data } = await api.post("/api/ai/upload-resume",
+        { title, resumeText },
+        { headers: { Authorization: token } }
+      );
 
       setTitle("");
       setFile(null);
@@ -85,7 +96,7 @@ const Dashboard = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+};
 
   const deleteResume = async () => {
     try {
