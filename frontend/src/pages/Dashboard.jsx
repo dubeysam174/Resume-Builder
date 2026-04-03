@@ -57,7 +57,7 @@ const Dashboard = () => {
 
     setIsLoading(true);
     try {
-      const resumeText = await pdfToText.default(file);
+      const resumeText = await pdfToText(file);
       const { data } = await api.post("/api/ai/upload-resume", {
         title,
         resumeText,
