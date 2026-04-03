@@ -11,7 +11,21 @@ import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import api from "@/configs/api";
 import toast from "react-hot-toast";
-import pdfToText from "react-pdftotext";
+import * as pdfjsLib from "pdfjs-dist";
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+
+const extractTextFromPDF = async (file) => {
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  let text = "";
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    text += content.items.map((item) => item.str).join(" ");
+  }
+  return text;
+};
 
 const Dashboard = () => {
   const colors = ["#6366f1", "#8b5cf6", "#ec4899", "#06b6d4", "#22c55e"];
@@ -57,7 +71,7 @@ const Dashboard = () => {
 
     setIsLoading(true);
     try {
-      const resumeText = await pdfToText(file);
+      const resumeText = await extractTextFromPDF(file);
       const { data } = await api.post("/api/ai/upload-resume", {
         title,
         resumeText,
@@ -97,20 +111,17 @@ const Dashboard = () => {
 
         {/* HEADER */}
         <div className="mb-8 p-5 rounded-2xl 
-bg-indigo-50 dark:bg-indigo-500/10 
-border border-indigo-200 dark:border-indigo-400/20 
-text-left">
-
-  <h2 className="text-lg font-semibold text-indigo-700 dark:text-indigo-300">
-    Want to check your ATS score?
-  </h2>
-
-  <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-    Upload your existing resume to analyze your ATS score instantly.  
-    Don’t have one? Create a new resume first and then check your score.
-  </p>
-
-</div>
+          bg-indigo-50 dark:bg-indigo-500/10 
+          border border-indigo-200 dark:border-indigo-400/20 
+          text-left">
+          <h2 className="text-lg font-semibold text-indigo-700 dark:text-indigo-300">
+            Want to check your ATS score?
+          </h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+            Upload your existing resume to analyze your ATS score instantly.
+            Don't have one? Create a new resume first and then check your score.
+          </p>
+        </div>
 
         {/* ACTION BUTTONS */}
         <div className="flex flex-wrap gap-6">
@@ -157,7 +168,6 @@ text-left">
         <div className="flex flex-wrap gap-6">
           {allresumes.map((resume, index) => {
             const baseColor = colors[index % colors.length];
-
             return (
               <div
                 key={resume._id}
@@ -170,11 +180,9 @@ text-left">
                 transition-all duration-300 cursor-pointer group"
               >
                 <FilePenLineIcon style={{ color: baseColor }} />
-
                 <p className="text-sm font-semibold px-3 text-center truncate text-slate-800 dark:text-white">
                   {resume.title}
                 </p>
-
                 <p className="absolute bottom-2 text-[11px] opacity-70 text-slate-600 dark:text-gray-400">
                   {new Date(resume.updatedAt).toLocaleDateString()}
                 </p>
@@ -211,16 +219,15 @@ text-left">
             <h2 className="text-xl font-semibold mb-4 text-slate-800 dark:text-white">
               Create Resume
             </h2>
-
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
+              placeholder="Resume title"
               className="w-full px-4 py-2 mb-4 rounded-lg outline-none 
               bg-white dark:bg-white/10 
               border border-slate-200 dark:border-white/10 
               text-black dark:text-white"
             />
-
             <button className="w-full py-2 bg-indigo-600 text-white rounded-lg">
               Create
             </button>
@@ -237,7 +244,6 @@ text-left">
             <h2 className="text-lg font-semibold text-center mb-3 text-slate-800 dark:text-white">
               Delete Resume?
             </h2>
-
             <div className="flex gap-3">
               <button
                 onClick={() => setDeleteResumeId("")}
@@ -269,18 +275,20 @@ text-left">
             <h2 className="text-xl font-semibold mb-4 text-slate-800 dark:text-white">
               Upload Resume
             </h2>
-
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
+              placeholder="Resume title"
               className="w-full px-4 py-2 mb-4 rounded-lg outline-none 
               bg-white dark:bg-white/10 
               border border-slate-200 dark:border-white/10 
               text-black dark:text-white"
             />
-
-            <input type="file" onChange={(e) => setFile(e.target.files[0])} />
-
+            <input
+              type="file"
+              accept=".pdf"
+              onChange={(e) => setFile(e.target.files[0])}
+            />
             <button className="w-full mt-4 py-2 bg-indigo-600 text-white rounded-lg">
               {isLoading ? "Uploading..." : "Upload"}
             </button>
